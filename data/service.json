@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "name": "熱石按摩",
+    "category": "A",
+    "price": 1200,
+    "duration ": 60,
+    "description": "熱石按摩是一種沿著血液返回心臟的方向長時間滑動摩擦肌肉的方法，熱石按摩對於增加血液中的含氧量、減少肌肉毒素、改善血液循環和靈活性特別有益。緩解緊張局勢。",
+    "img": "http://localhost:5000/images/service/massage1.png"
+  },
+  {
+    "id": 2,
+    "name": "泰式按摩",
+    "category": "A",
+    "price": 1500,
+    "duration ": 90,
+    "description": "泰式按摩透過放鬆肌肉緊張、緩解痙攣和改善活動範圍來幫助人的肌肉、關節、韌帶和筋膜。傳統泰式按摩中對特定穴位的壓力和類似瑜伽的伸展運動相結合，可以緩解肌肉壓力和緊張區域。事實上，接受者經常報告說，他們的肌肉在訓練後幾天仍然鬆弛。",
+    "img": "http://localhost:5000/images/service/massage2.png"
+  },
+  {
+    "id": 3,
+    "name": "指壓按摩",
+    "category": "A",
+    "price": 1000,
+    "duration ": 100,
+    "description": "指壓有助於治療：關節炎、消化緩慢、失眠、焦慮、脊椎和頸部疼痛、月經疼痛、頭痛、疲勞。",
+    "img": "http://localhost:5000/images/service/massage3.png"
+  }
+]

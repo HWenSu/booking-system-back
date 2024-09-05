@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "name": "熱石按摩",
+    "price": 1200,
+    "description": "60分鐘",
+    "image": "http://localhost:5000/images/massage1.png"
+  },
+  {
+    "id": 2,
+    "name": "泰式按摩",
+    "price": 1500,
+    "description": "90分鐘",
+    "image": "http://localhost:5000/images/massage2.png"
+  },
+  {
+    "id": 3,
+    "name": "指壓按摩",
+    "price": 1000,
+    "description": "90分鐘,指壓有助於治療： 關節炎、消化緩慢、失眠、焦慮、脊椎和頸部疼痛、月經疼痛、頭痛、疲勞。",
+    "image": "http://localhost:5000/images/massage3.png"
+  }
+]

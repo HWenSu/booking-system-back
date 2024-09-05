@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <form
+      action="http://localhost:5000/service/"
+      method="POST"
+      enctype="multipart/form-data"
+    >
+      名稱(按摩)name:<input type="text" name="name" /> 類型category:<select
+        type="text"
+        name="category"
+      >
+        <option>A</option>
+        <option>B</option>
+        <option>C</option>
+      </select>
+      價格price:<input type="text" name="price" /> 時長duration:<input
+        type="text"
+        name="duration"
+      />
+      詳述description:<input type="text" name="description" />
+      <input id="image" type="file" name="img" />
+      <input type="submit" value="上传" />
+    </form>
+    <?php
+  $targetDir = "uploads/";  // 保存上傳文件的目錄
+  $targetFile = $targetDir . basename($_FILES["img"]["name"]);  // 目標文件的路徑
+
+  if(move_uploaded_file($_FILES["img"]["tmp_name"], $targetFile)){
+    echo "文件上傳成功";
+  }
+  else{
+    echo "文件上傳失败";
+  }
+?>
+  </body>
+</html>

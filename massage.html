@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <form action="http://localhost:5000/massage/" method="POST" enctype="multipart/form-data">
+  <input id="image" type="file" name="imageFile">
+  <input type="text" name="name">
+  <input type="text" name="price">
+  <input type="text" name="description">
+  <input type="submit" value="上傳">
+</form>
+<?php
+  $targetDir = "uploads/";  // 保存上傳文件的目錄
+  $targetFile = $targetDir . basename($_FILES["imageFile"]["name"]);  // 目標文件的路徑
+
+  if(move_uploaded_file($_FILES["imageFile"]["tmp_name"], $targetFile)){
+    echo "文件上傳成功";
+  }
+  else{
+    echo "文件上傳失败";
+  }
+?>
+</body>
+</html>
