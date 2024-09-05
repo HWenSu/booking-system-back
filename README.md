@@ -1,6 +1,5 @@
-# calculator-back
-透過計算機的後端，向初學者介紹後端框架(Express)的使用
-
+# massage-back
+預約服務網站的後端
 ## 本地建置與初始化
 
 ```
