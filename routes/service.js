@@ -5,7 +5,6 @@ const { Router } = require('express')
 const router = Router()
 const {serviceService} = require('../services')
 const upload = require('../util/upload')
-const path = require('path')
 const uploadFile = upload('images/service').single('img')
 //調用util
 
@@ -58,8 +57,15 @@ router.post('/', uploadFile, async (req, res) => {
         .status(400)
         .json({ error: '請輸入price,並且必須為有效的正整數' })
     }
-    if (!duration) {
-      return res.status(400).json({ error: '請輸入duration' })
+    if (
+      !duration ||
+      isNaN(duration) ||
+      Number(duration) <= 0 ||
+      !Number.isInteger(Number(duration))
+    ) {
+      return res
+        .status(400)
+        .json({ error: '請輸入duration,並且必須為有效的正整數' })
     }
     if (!description) {
       return res.status(400).json({ error: '請輸入description' })

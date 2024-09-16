@@ -21,13 +21,13 @@ router.get('/', async (req, res) => {
 // 創建服務
 router.post('/', async (req, res) => {
   try {
-    const { serviceId, timestamp, name, phone, email } = req.body
+    const { serviceId, start, name, phone, email } = req.body
     //以下分別做檢查
     if (!serviceId) {
       return res.status(400).json({ error: '請輸入serviceId' })
     }
-    if (!timestamp) {
-      return res.status(400).json({ error: '請輸入timestamp' })
+    if (!start) {
+      return res.status(400).json({ error: '請輸入start' })
     }
     if (!name) {
       return res.status(400).json({ error: '請輸入name' })
@@ -45,7 +45,7 @@ router.post('/', async (req, res) => {
     const newOrder = await orderService.createOrder(req.body)
 
     try{
-      await orderService.sendEmail(email, name)
+      await orderService.sendEmail(email, name, start)
       res.status(201).json(newOrder)
     }catch(emailErr){
       res.status(500).json({ error: '訂單創建成功，但郵件發送失敗' })

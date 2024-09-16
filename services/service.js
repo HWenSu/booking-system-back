@@ -1,19 +1,28 @@
 //service 做資料正確的判斷
 //顯示錯誤的訊息做分類
-const {serviceModel} = require('../models')
-const path = require('path')
+const { serviceModel } = require('../models')
 
 class ServiceService {
-  //直接讀取陣列裡面全部的資料就好 不用全部重讀一遍read
   async getAllService() {
-    return serviceModel.services
+    return serviceModel.findAll()
   }
 
   async getServiceById(id) {
-    return serviceModel.getById(id)
+    const service = await serviceModel.findByPk(id)
+    if (!service) {
+      throw new Error('查無此服務')
+    }
+    return service
   }
 
   async createService(serviceData, file) {
+    const categories = ['A', 'B', 'C']
+    const defaultCategory = 'A'
+
+    certificateData.category = categories.includes(certificateData.category)
+      ? certificateData.category
+      : defaultCategory
+
     let imagePath = ''
     if (file !== undefined) {
       //config js
@@ -26,27 +35,25 @@ class ServiceService {
     return serviceModel.create(newServiceData)
   }
 
-
   //如果進來的ID是負數或是英文 這裡擋掉  //這裡返回到promise
   async updateService(id, serviceData) {
-    await serviceModel.getById(id).catch((error) => {
-      //return 404 msg 沒ID 的文章
+    const service = await serviceModel.findByPk(id)
+    if (!service) {
       throw new Error(`查無此服務`)
-    })
+    }
     // 執行更新操作
-    return serviceModel.update(id, serviceData)
+    return service.update(serviceData)
   }
 
   //刪除前確認文章是否存在
   async deleteService(id) {
-    await serviceModel.getById(id).catch((error) => {
-      throw new Error(`查無此服務`)
-    })
-    return serviceModel.delete(id)
+    const service = await serviceModel.findByPk(id)
+    if (!service) {
+      throw new Error(`查無此員工`)
+    }
+    return service.destroy()
   }
 }
-
 const serviceService = new ServiceService()
 
 module.exports = serviceService
-

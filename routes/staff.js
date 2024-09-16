@@ -5,7 +5,6 @@ const { Router } = require('express')
 const router = Router()
 const { staffService } = require('../services')
 const upload = require('../util/upload')
-const path = require('path')
 const uploadFile = upload('images/staff').single('img')
 //調用util
 

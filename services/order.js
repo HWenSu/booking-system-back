@@ -1,79 +1,126 @@
 //service 做資料正確的判斷
 //顯示錯誤的訊息做分類
 const { orderModel, serviceModel, staffModel } = require('../models')
-const path = require('path')
+require('dotenv').config() // 加載 .env 文件
+const { Op } = require('sequelize')
 const nodemailer = require('nodemailer')
 
 class OrderService {
   //直接讀取陣列裡面全部的資料就好 不用全部重讀一遍read
   async getAllOrder() {
-    return orderModel.orders
+    return orderModel.findAll()
   }
 
-  // async getOrderById(id) {
-  //   return orderModel.getById(id)
-  // }
+  async getOrderById(id) {
+    const order = await orderModel.findByPk(id)
+    if (!order) {
+      throw new Error('查無此訂單')
+    }
+    return order
+  }
 
   async createOrder(orderData) {
-    const { serviceId, staff, timestamp } = orderData
-    const serviceList = serviceModel.services.find(
-      (serviceId) => serviceId.id === orderData.serviceId
-    )
-    if (serviceList === undefined) {
+    const { serviceId, staff, start } = orderData
+
+    // 確認 serviceId 是否有效
+    const service = await serviceModel.findByPk(serviceId)
+    if (!service) {
       throw new Error('無效的服務項目ID')
     }
-    if (orderData.staff > 0) {
-      const staffList = staffModel.staffs.find(
-        (staffId) => staffId.id === orderData.staff
-      )
-      if (staffList === undefined) {
-        throw new Error('無效的員工ID')
-      }
-    } else if (
-      orderData.staff !== -1 &&
-      orderData.staff !== -2 &&
-      orderData.staff !== -3
-    ) {
-      throw new Error('無效的員工性別')
+    // 如果有指定員工，確認 staff ID 是否有效
+    const staffRecord = await staffModel.findByPk(staff)
+    if (!staffRecord) {
+      throw new Error('無效的員工ID')
     }
 
-    return orderModel.create(orderData)
+    // 計算 end time 根據服務時間長度
+    const end = new Date(start)
+    end.setMinutes(end.getMinutes() + service.duration) // 加上服務的持續時間
+
+    const genderConvert = {
+      0: '男',
+      1: '女',
+      2: '其他',
+      3: '不想說'
+    }
+
+    const conflictingOrders = await orderModel.findOne({
+      where: {
+        staff: staff, // 檢查是否有相同的員工
+        [Op.or]: [
+          // 使用 Sequelize 的 Op.or 組合多種條件來判斷預約時間是否重疊
+          {
+            start: {
+              [Op.between]: [start, end] // 檢查新的 start 時間是否落在現有預約的 start 和 end 之間
+            }
+          },
+          {
+            end: {
+              [Op.between]: [start, end] // 檢查新的 end 時間是否落在現有預約的 start 和 end 之間
+            }
+          },
+          {
+            [Op.and]: [
+              { start: { [Op.lte]: start } }, // 檢查現有預約的 start 是否在新預約的 start 之前或相等 lit為小於等於
+              { end: { [Op.gte]: end } } // 檢查現有預約的 end 是否在新預約的 end 之後或相等 gte為大於等於
+            ]
+          }
+        ]
+      }
+    })
+    if (conflictingOrders) {
+      throw new Error('該員工在此時段已有其他預約')
+    }
+
+    // 創建新訂單
+    const newOrder = await orderModel.create({
+      serviceId: orderData.serviceId,
+      start: orderData.start,
+      end: end,
+      staff: orderData.staff,
+      name: orderData.name,
+      gender: genderConvert[orderData.gender],
+      phone: orderData.phone,
+      email: orderData.email,
+      remark: orderData.remark
+    })
+    return newOrder
   }
 
   //如果進來的ID是負數或是英文 這裡擋掉  //這裡返回到promise
   async updateOrder(id, orderData) {
-    await orderModel.getById(id).catch((error) => {
-      //return 404 msg 沒ID 的文章
-      throw new Error(`查無此服務`)
-    })
-    // 執行更新操作
-    return orderModel.update(id, orderData)
+    const order = await orderModel.findByPk(id)
+    if (!order) {
+      throw new Error('查無此訂單')
+    }
+    return order.update(orderData)
   }
 
   //刪除前確認文章是否存在
   async deleteOrder(id) {
-    await orderModel.getById(id).catch((error) => {
-      throw new Error(`查無此服務`)
-    })
-    return orderModel.delete(id)
+    const order = await orderModel.findByPk(id)
+    if (!order) {
+      throw new Error('查無此訂單')
+    }
+    return order.destroy()
   }
 
-  async sendEmail(email, name) {
+  async sendEmail(email, name, start) {
     //設置郵件發送配置
     const transporter = nodemailer.createTransport({
       service: 'gmail', //根據需求換其他信箱服務
       auth: {
-        user: '你的信箱',
-        pass: '你的密碼'
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
       }
     })
     //transporter.verify().then((result) => console.log(result))
     //發送郵件的函數
     const mailOptions = {
-      from: 'willy39steven@gmail.com',
+      from: process.env.EMAIL_USER,
       to: email,
       subject: `美容預約申請通知`,
-      text: `親愛的${name}，您的預約已成功，期待您的大駕光臨`
+      text: `親愛的${name}，您預約在${start}的時段已成功，期待您的大駕光臨`
     }
     transporter.sendMail(mailOptions, (err, info) => {
       if (err) {
