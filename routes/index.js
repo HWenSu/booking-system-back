@@ -20,17 +20,28 @@ router.get('/', (req, res) => {
   // res.send('This is backend of Calculator.')
 })
 
+// const service = require('./service')
+// router.use('/service', service)
 
-const service = require('./service')
-router.use('/service', service)
+// 這裡提取公司名稱，並將它作為參數傳遞給各個子路由
+router.use('/:company/service', (req, res, next) => {
+  req.company = req.params.company
+  next()
+}, require('./service'))
 
-const staff = require('./staff')
-router.use('/staff', staff)
+router.use('/:company/staff', (req, res, next) => {
+  req.company = req.params.company
+  next()
+}, require('./staff'))
 
-const certificate = require('./certificate')
-router.use('/certificate', certificate)
+router.use('/:company/certificate', (req, res, next) => {
+  req.company = req.params.company
+  next()
+}, require('./certificate'))
 
-const order = require('./order')
-router.use('/order', order)
+router.use('/:company/order', (req, res, next) => {
+  req.company = req.params.company
+  next()
+}, require('./order'))
 
 module.exports = router

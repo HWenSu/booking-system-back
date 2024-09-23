@@ -13,7 +13,8 @@ const uploadFile = upload('images/staff').single('img')
 // 獲取所有服務
 router.get('/', async (req, res) => {
   try {
-    const staffs = await staffService.getAllStaff()
+    const company = req.company
+    const staffs = await staffService.getAllStaff(company)
     res.json(staffs)
   } catch (err) {
     res.status(500).json({ error: '訊息錯誤' })
@@ -25,7 +26,8 @@ router.get('/:id', async (req, res) => {
   try {
     //寫條件判斷是否為數字
     const staffNumber = Number(req.params.id)
-    const staff = await staffService.getStaffById(staffNumber)
+    const company = req.company
+    const staff = await staffService.getStaffById(staffNumber, company)
     if (staff) {
       res.json(staff)
     }
@@ -39,18 +41,19 @@ router.get('/:id', async (req, res) => {
 // 創建服務   //staffService.upload(依照不同的路徑給參數).single('img') 變成一個變數
 router.post('/', uploadFile, async (req, res) => {
   try {
-    const { name, company ,expertise } = req.body
+    const { name, expertise } = req.body
+    const company = req.company
     // 以下分別做檢查
     if (!name) {
       return res.status(400).json({ error: '請輸入name' })
     }
-    if (!company) {
-      return res.status(400).json({ error: '請輸入company' })
-    }
     if (!expertise) {
       return res.status(400).json({ error: '請輸入expertise' })
     }
-    const newStaff = await staffService.createStaff(req.body, req.file)
+    const newStaff = await staffService.createStaff(
+      { ...req.body, company },
+      req.file
+    )
     res.status(201).json(newStaff)
   } catch (err) {
     res.status(500).json({ error: err.message || '訊息錯誤' })

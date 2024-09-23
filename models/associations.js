@@ -9,7 +9,7 @@ staffModel.belongsToMany(certificateModel, {
 })
 certificateModel.belongsToMany(staffModel, {
   through: 'staff_certificates',
-  foreignKey: 'certificates_id'
+  foreignKey: 'certificate_id'
 })
 
 module.exports = { staffModel, certificateModel }

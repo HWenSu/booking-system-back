@@ -3,8 +3,10 @@
 const { staffModel, certificateModel } = require('../models')
 
 class StaffService {
-  async getAllStaff() {
+
+  async getAllStaff(companyName) {
     const staffList = await staffModel.findAll({
+      where: { company: companyName },
       include: [
         {
           model: certificateModel, // 關聯
@@ -26,7 +28,6 @@ class StaffService {
     return staffList.map((staff) => ({
       id: staff.id,
       name: staff.name,
-      company: staff.company,
       gender: genderConvert[staff.gender],
       img: staff.img,
       expertise: staff.expertise,
@@ -37,8 +38,9 @@ class StaffService {
     }))
   }
 
-  async getStaffById(id) {
-    const staff = await staffModel.findByPk(id, {
+  async getStaffById(id, companyName) {
+    const staff = await staffModel.findOne({
+      where: {  id,company: companyName },
       include: [
         {
           model: certificateModel, // 關聯
@@ -63,7 +65,6 @@ class StaffService {
 
     return {
       name: staff.name,
-      company: staff.company,
       gender: genderConvert[staff.gender],
       img: staff.img,
       expertise: staff.expertise,
