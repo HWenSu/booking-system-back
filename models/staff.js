@@ -1,4 +1,4 @@
-//model 做數據管理
+//model/staff.js 做數據管理
 const { DataTypes } = require('sequelize')
 const sequelize = require('../util/db')
 
@@ -22,7 +22,7 @@ const staffModel = sequelize.define(
     gender: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 2
+      defaultValue: 3
     },
     img: {
       type: DataTypes.STRING

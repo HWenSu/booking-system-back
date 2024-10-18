@@ -1,4 +1,4 @@
-//service 做資料正確的判斷
+//service/staff.js 做資料正確的判斷
 //顯示錯誤的訊息做分類
 const { staffModel, certificateModel } = require('../models')
 
@@ -19,10 +19,9 @@ class StaffService {
     })
 
     const genderConvert = {
-      0: '男',
       1: '女',
       2: '其他',
-      3: '不想說'
+      3: '男'
     }
 
     return staffList.map((staff) => ({
@@ -53,10 +52,9 @@ class StaffService {
     })
 
     const genderConvert = {
-      0: '男',
       1: '女',
       2: '其他',
-      3: '不想說'
+      3: '男'
     }
 
     if (!staff) {
@@ -95,6 +93,63 @@ class StaffService {
     return staffModel.create(newStaffData)
   }
 
+async addCertificatesToStaff(staffId, certificateIds) {
+  const staff = await staffModel.findByPk(staffId);
+  if (!staff) {
+    throw new Error('找不到該員工');
+  }
+
+  // 使用 getCertificateModels() 來獲取員工已有的證照
+  const existingCertificates = await staff.getCertificateModels({
+    where: { id: certificateIds }
+  });
+
+  const existingCertificateIds = existingCertificates.map(cert => cert.id);
+  const newCertificateIds = certificateIds.filter(id => !existingCertificateIds.includes(id));
+
+  if (newCertificateIds.length === 0) {
+    throw new Error('所有證照已經存在，沒有新增任何證照');
+  }
+
+  const newCertificates = await certificateModel.findAll({
+    where: { id: newCertificateIds }
+  });
+
+  if (newCertificates.length !== newCertificateIds.length) {
+    const missingIds = newCertificateIds.filter(id => !newCertificates.some(cert => cert.id === id));
+    throw new Error(`找不到以下證照ID: ${missingIds.join(', ')}`);
+  }
+
+  await staff.addCertificateModels(newCertificates); // 使用 addCertificateModels() 來新增
+  return { message: '證照成功添加' };
+}
+
+  async removeCertificatesFromStaff(staffId, certificateIds){
+    const staff = await staffModel.findByPk(staffId)
+    if (!staff) {
+      throw new Error('找不到該員工')
+    }
+    //使用 getCertificateModels() 來獲取員工現有的證照
+    const existingCertificates = await staff.getCertificateModels({
+      where: {id: certificateIds}
+    })
+
+    const existingCertificateIds = existingCertificates.map(cert => cert.id)
+    const missingCertificateIds = certificateIds.filter(id => !existingCertificateIds.includes(id))
+
+    if(missingCertificateIds.length > 0 ){
+       throw new Error(
+         `以下證照ID不存在或是該員工未持有: ${missingCertificateIds.join(', ')}`
+       )
+    }
+
+    await staff.removeCertificateModels(existingCertificates)
+    return { message: '成功刪除指定的證照' }
+  }
+
+
+
+
   //如果進來的ID是負數或是英文 這裡擋掉  //這裡返回到promise
   async updateStaff(id, staffData) {
     const staff = await staffModel.findByPk(id)
@@ -105,7 +160,7 @@ class StaffService {
     return staff.update(staffData)
   }
 
-  //刪除前確認文章是否存在
+  //刪除前確認員工是否存在
   async deleteStaff(id) {
     const staff = await staffModel.findByPk(id)
     if (!staff) {

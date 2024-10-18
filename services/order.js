@@ -38,10 +38,10 @@ class OrderService {
     end.setMinutes(end.getMinutes() + service.duration) // 加上服務的持續時間
 
     const genderConvert = {
-      0: '男',
-      1: '女',
-      2: '其他',
-      3: '不想說'
+      1: '男',
+      2: '女',
+      3: '其他',
+      4: '不想說'
     }
 
     const conflictingOrders = await orderModel.findOne({

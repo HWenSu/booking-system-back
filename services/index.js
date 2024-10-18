@@ -6,12 +6,14 @@ const serviceService = require('./service')
 const staffService = require('./staff')
 const certificateService = require('./certificate')
 const orderService = require('./order')
+const templateService = require('./template')
 
 module.exports = {
   serviceService,
   staffService,
   certificateService,
-  orderService
+  orderService,
+  templateService
 }
 
 // const { calculator : calculator } = require('./calculator')

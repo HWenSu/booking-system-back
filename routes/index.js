@@ -24,24 +24,49 @@ router.get('/', (req, res) => {
 // router.use('/service', service)
 
 // 這裡提取公司名稱，並將它作為參數傳遞給各個子路由
-router.use('/:company/service', (req, res, next) => {
-  req.company = req.params.company
-  next()
-}, require('./service'))
+router.use(
+  '/:company/service',
+  (req, res, next) => {
+    req.company = req.params.company
+    next()
+  },
+  require('./service')
+)
 
-router.use('/:company/staff', (req, res, next) => {
-  req.company = req.params.company
-  next()
-}, require('./staff'))
+router.use(
+  '/:company/staff',
+  (req, res, next) => {
+    req.company = req.params.company
+    next()
+  },
+  require('./staff')
+)
 
-router.use('/:company/certificate', (req, res, next) => {
-  req.company = req.params.company
-  next()
-}, require('./certificate'))
+router.use(
+  '/:company/certificate',
+  (req, res, next) => {
+    req.company = req.params.company
+    next()
+  },
+  require('./certificate')
+)
 
-router.use('/:company/order', (req, res, next) => {
-  req.company = req.params.company
-  next()
-}, require('./order'))
+router.use(
+  '/:company/order',
+  (req, res, next) => {
+    req.company = req.params.company
+    next()
+  },
+  require('./order')
+)
+
+router.use(
+  '/:company/template',
+  (req, res, next) => {
+    req.company = req.params.company
+    next()
+  },
+  require('./template')
+)
 
 module.exports = router

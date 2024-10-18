@@ -3,12 +3,10 @@
 //const router = express.Router()
 const { Router } = require('express')
 const router = Router()
-const {serviceService} = require('../services')
+const { serviceService } = require('../services')
 const upload = require('../util/upload')
 const uploadFile = upload('images/service').single('img')
 //調用util
-
-
 
 //路由這邊檢查參數，有無參數跟參數是否在合理範圍內
 // http return 400是用戶端錯誤 500是伺服器端錯誤
@@ -17,7 +15,6 @@ router.get('/', async (req, res) => {
   try {
     const services = await serviceService.getAllService()
     res.json(services)
-    
   } catch (err) {
     res.status(500).json({ error: '訊息錯誤' })
   }
@@ -48,24 +45,24 @@ router.post('/', uploadFile, async (req, res) => {
       return res.status(400).json({ error: '請輸入name' })
     }
     if (
-      !price ||
-      isNaN(price) ||
-      Number(price) <= 0 ||
-      !Number.isInteger(Number(price))
+      !Array.isArray(price) ||
+      price.some(
+        (p) => isNaN(p) || !Number.isInteger(Number(p)) || Number(p) <= 0
+      )
     ) {
       return res
         .status(400)
-        .json({ error: '請輸入price,並且必須為有效的正整數' })
+        .json({ error: '請輸入price的陣列,並且必須為有效的正整數' })
     }
     if (
-      !duration ||
-      isNaN(duration) ||
-      Number(duration) <= 0 ||
-      !Number.isInteger(Number(duration))
+      !Array.isArray(duration) ||
+      duration.some(
+        (d) => isNaN(d) || !Number.isInteger(Number(d)) || Number(d) <= 0
+      )
     ) {
       return res
         .status(400)
-        .json({ error: '請輸入duration,並且必須為有效的正整數' })
+        .json({ error: '請輸入duration的陣列,並且必須為有效的正整數' })
     }
     if (!description) {
       return res.status(400).json({ error: '請輸入description' })

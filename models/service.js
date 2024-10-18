@@ -1,4 +1,4 @@
-//model 做數據管理
+//model/service.js 做數據管理
 const { DataTypes } = require('sequelize')
 const sequelize = require('../util/db')
 
@@ -15,6 +15,10 @@ const serviceModel = sequelize.define(
     name: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+    massage_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false, 
     },
     category: {
       type: DataTypes.STRING,

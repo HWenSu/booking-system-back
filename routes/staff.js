@@ -10,7 +10,7 @@ const uploadFile = upload('images/staff').single('img')
 
 //路由這邊檢查參數，有無參數跟參數是否在合理範圍內
 // http return 400是用戶端錯誤 500是伺服器端錯誤
-// 獲取所有服務
+// 取得所有員工
 router.get('/', async (req, res) => {
   try {
     const company = req.company
@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
   }
 })
 
-// 獲取一項服務
+// 取得一位員工
 router.get('/:id', async (req, res) => {
   try {
     //寫條件判斷是否為數字
@@ -38,7 +38,7 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// 創建服務   //staffService.upload(依照不同的路徑給參數).single('img') 變成一個變數
+// 新增員工   //staffService.upload(依照不同的路徑給參數).single('img') 變成一個變數
 router.post('/', uploadFile, async (req, res) => {
   try {
     const { name, expertise } = req.body
@@ -59,6 +59,43 @@ router.post('/', uploadFile, async (req, res) => {
     res.status(500).json({ error: err.message || '訊息錯誤' })
   }
 })
+
+
+// 批量增加員工的證照
+router.post('/:id/certificates', async (req, res) => {
+  try {
+    const staffId = Number(req.params.id)
+    const certificateIds = req.body.certificateIds
+
+    // 檢查是否提供證照ID列表
+    if (!Array.isArray(certificateIds) || certificateIds.length === 0) {
+      return res.status(400).json({ error: '請提供有效的證照ID列表' })
+    }
+
+    const result = await staffService.addCertificatesToStaff(staffId, certificateIds)
+    res.status(200).json(result)
+  } catch (err) {
+    res.status(500).json({ error: err.message || '添加證照時發生錯誤' })
+  }
+})
+
+// 批量刪除員工的證照
+router.delete('/:id/certificates', async (req, res) => {
+  try {
+    const staffId = Number(req.params.id);
+    const { certificateIds } = req.body;
+
+    if (!Array.isArray(certificateIds) || certificateIds.length === 0) {
+      return res.status(400).json({ error: '請提供有效的證照ID列表' });
+    }
+
+    const result = await staffService.removeCertificatesFromStaff(staffId, certificateIds);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 
 // 更新服務
 router.put('/:id', async (req, res) => {
