@@ -9,32 +9,24 @@ const {
 } = require('../models')
 
 class TemplateService {
-  async getAllTemplate(company) {
-    const templates = await templateModel.findAll({
+  // 獲取模板數據
+  async getTemplates() {
+    return await templateModel.findAll({
       include: [
         {
           model: templateDataModel
         }
       ]
     })
+  }
 
-    // 取得服務資料
+  // 獲取服務數據
+  async getServices() {
     const services = await serviceModel.findAll()
 
-    // 取得員工資料
-    const staff = await staffModel.findAll({
-      where: {
-        company: company // 根據公司名稱過濾員工
-      }
-    })
-    
-    // 整理模板數據
-    let formattedTemplates = []
-
-    // 儲存服務和時長
     let serviceMap = new Map()
 
-    // 先處理服務資料，按 `massage_id` 合併相同的服務，並將 `duration` 轉換為數組
+    // 處理服務資料
     services.forEach((service) => {
       const serviceId = service.massage_id
 
@@ -52,37 +44,18 @@ class TemplateService {
       }
     })
 
-    // 將合併後的服務資料轉換成需要的下拉選項格式
-    const serviceDropdown = {
-      category: 'Dropdown',
-      Data: [
-        {
-          label: 'Service',
-          option: Array.from(serviceMap.values()).map((service) => ({
-            id: service.id,
-            name: service.name
-          })),
-          required: true
-        }
-      ]
-    }
+    return serviceMap
+  }
 
-    // 將時長資料轉換成需要的下拉選項格式
-    const durationDropdown = {
-      category: 'Dropdown',
-      Data: [
-        {
-          label: 'Duration',
-          option: Array.from(serviceMap.values()).map((service) => ({
-            id: service.id,
-            name: service.durations.sort((a, b) => a - b) // 按時長排序
-          })),
-          required: true
-        }
-      ]
-    }
+  // 獲取員工數據
+  async getStaff(company) {
+    const staff = await staffModel.findAll({
+      where: {
+        company: company
+      }
+    })
 
-    // 根據性別分組員工資料，並將名字整理成列表
+    // 根據性別分組員工資料
     const staffByGender = {
       male: [],
       female: [],
@@ -99,97 +72,154 @@ class TemplateService {
       }
     })
 
-    // 按需求格式構建 Gender 下拉選單
-    const genderDropdown = {
-      category: 'Dropdown',
-      Data: [
-        {
-          label: 'Gender',
-          option: [
+    return staffByGender
+  }
+
+
+  // 格式化模板數據
+  formatTemplateData(template, serviceMap, staffByGender) {
+    let formattedTemplates = []
+    let changePageTemplates = []
+
+    template.templateDataModels.forEach((dataModel) => {
+      const formattedData = {
+        category: template.type,
+        Data: [
+          {
+            label: dataModel.label,
+            required: dataModel.required === 1
+          }
+        ]
+      }
+
+      // Input 類型
+      if (template.type === 'Input') {
+        formattedData.name =
+          dataModel.label.charAt(0).toUpperCase() + dataModel.label.slice(1)
+        formattedData.Data[0].type = dataModel.type
+      }
+
+      // ChangePage 類型
+      if (template.type === 'ChangePage' && dataModel.type) {
+        formattedData.Data[0].type = dataModel.type.split(',')
+        changePageTemplates.push(formattedData)
+      }
+
+      // Dropdown 類型
+      if (template.type === 'Dropdown') {
+        if (dataModel.label === 'Service') {
+          formattedData.Data[0].option = Array.from(serviceMap.values()).map(
+            (service) => ({
+              id: service.id,
+              name: service.name
+            })
+          )
+        } else if (dataModel.label === 'Duration') {
+          formattedData.Data[0].option = Array.from(serviceMap.values()).map(
+            (service) => ({
+              id: service.id,
+              name: service.durations.sort((a, b) => a - b)
+            })
+          )
+        } else if (dataModel.label === 'Gender') {
+          formattedData.Data[0].option = [
             { id: 1, name: '女' },
             { id: 2, name: '其他' },
             { id: 3, name: '男' }
-          ],
-          required: false
-        }
-      ]
-    }
-
-    // 按需求格式構建 Staff 下拉選單
-    const staffDropdown = {
-      category: 'Dropdown',
-      Data: [
-        {
-          label: 'Staff',
-          option: [
+          ]
+        } else if (dataModel.label === 'Staff') {
+          formattedData.Data[0].option = [
             { id: 1, name: staffByGender.female },
             { id: 2, name: staffByGender.other },
             { id: 3, name: staffByGender.male }
-          ],
+          ]
+        }
+      }
+
+      if (template.type !== 'ChangePage') {
+        formattedTemplates.push(formattedData)
+      }
+    })
+
+    return { formattedTemplates, changePageTemplates }
+  }
+
+  // 排列模板順序
+  orderTemplates(formattedTemplates, changePageTemplates) {
+    let orderedTemplates = []
+
+    // 1. 插入 Service
+    orderedTemplates.push(
+      formattedTemplates.find((t) => t.Data[0].label === 'Service')
+    )
+
+    // 2. 插入 Duration
+    orderedTemplates.push(
+      formattedTemplates.find((t) => t.Data[0].label === 'Duration')
+    )
+
+    // 3. 插入 Gender
+    orderedTemplates.push(
+      formattedTemplates.find((t) => t.Data[0].label === 'Gender')
+    )
+
+    // 4. 插入 Staff
+    orderedTemplates.push(
+      formattedTemplates.find((t) => t.Data[0].label === 'Staff')
+    )
+
+    // 5. 插入 TimePicker
+    orderedTemplates.push({
+      category: 'TimePicker',
+      Data: [
+        {
+          label: '',
           required: true
         }
       ]
-    }
-
-    // 處理模板數據
-    templates.forEach((template) => {
-      console.log(template)
-      template.templateDataModels.forEach((dataModel) => {
-        const formattedData = {
-          category: template.type,
-          Data: [
-            {
-              label: dataModel.label,
-              required: dataModel.required === 1 ? true : false
-            }
-          ]
-        }
-
-        // 如果是 Input 類型，添加 `name` 屬性
-        if (template.type === 'Input') {
-          formattedData.name =
-            dataModel.label.charAt(0).toUpperCase() + dataModel.label.slice(1)
-          formattedData.Data[0].type = dataModel.type
-        }
-
-        // 如果是 ChangePage 類型，處理 type
-        if (template.type === 'ChangePage' && dataModel.type) {
-          formattedData.Data[0].type = dataModel.type.split(',')
-        }
-
-        // 添加處理後的資料到結果
-        formattedTemplates.push(formattedData)
-      })
     })
 
-    // 查找所有 'ChangePage' 的模板
-    const changePageTemplates = formattedTemplates.filter(
-      (t) => t.category === 'ChangePage'
-    )
+    // 6. 插入第一個 ChangePage
+    orderedTemplates.push(changePageTemplates[0])
 
-    // 移動其中一個 'ChangePage' 到最後
-    if (changePageTemplates.length > 1) {
-      const secondChangePageIndex = formattedTemplates.indexOf(
-        changePageTemplates[1]
+    // 7. 插入 Input 類型資料
+    ;['Name', 'Phone', 'Email', 'Remark'].forEach((label) => {
+      const inputTemplate = formattedTemplates.find(
+        (t) => t.Data[0].label === label
       )
-      const secondChangePage = formattedTemplates.splice(
-        secondChangePageIndex,
-        1
-      )[0] // 移除第二個 'ChangePage'
-      formattedTemplates.push(secondChangePage) // 將它添加到數組的最後
+      if (inputTemplate) {
+        orderedTemplates.push(inputTemplate)
+      }
+    })
+
+    // 8. 插入第二個 ChangePage
+    if (changePageTemplates.length > 1) {
+      orderedTemplates.push(changePageTemplates[1])
     }
 
-    formattedTemplates.unshift(
-      serviceDropdown,
-      durationDropdown,
-      genderDropdown,
-      staffDropdown
-    )
+    return orderedTemplates
+  }
 
-    // 返回組裝好的結果，包含服務和時長的下拉選項
-    return formattedTemplates
+  // 組合起最終模板
+  async getAllTemplate(company) {
+    const templates = await this.getTemplates()
+    const services = await this.getServices()
+    const staff = await this.getStaff(company)
+
+    let allFormattedTemplates = []
+    let allChangePageTemplates = []
+
+    templates.forEach((template) => {
+      const { formattedTemplates, changePageTemplates } =
+        this.formatTemplateData(template, services, staff)
+      allFormattedTemplates = allFormattedTemplates.concat(formattedTemplates)
+      allChangePageTemplates =
+        allChangePageTemplates.concat(changePageTemplates)
+    })
+
+    return this.orderTemplates(allFormattedTemplates, allChangePageTemplates)
   }
 }
-const templateService = new TemplateService()
 
+const templateService = new TemplateService()
 module.exports = templateService

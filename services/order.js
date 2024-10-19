@@ -33,10 +33,6 @@ class OrderService {
       throw new Error('無效的員工ID')
     }
 
-    // 計算 end time 根據服務時間長度
-    const end = new Date(start)
-    end.setMinutes(end.getMinutes() + service.duration) // 加上服務的持續時間
-
     const genderConvert = {
       1: '男',
       2: '女',
@@ -44,30 +40,42 @@ class OrderService {
       4: '不想說'
     }
 
+    // 計算 end time 根據服務時間長度
+    const startDate = new Date(start)
+    const end = new Date(start)
+    end.setMinutes(end.getMinutes() + service.duration) // 加上服務的持續時間
+
     const conflictingOrders = await orderModel.findOne({
       where: {
         staff: staff, // 檢查是否有相同的員工
         [Op.or]: [
-          // 使用 Sequelize 的 Op.or 組合多種條件來判斷預約時間是否重疊
           {
             start: {
-              [Op.between]: [start, end] // 檢查新的 start 時間是否落在現有預約的 start 和 end 之間
+              //如果兩個條件都達成代表新的開始時間在現有的時間中間
+              [Op.gt]: startDate, // 檢查新的開始時間比現有的開始時間晚
+              [Op.lt]: end // 檢查新的開始時間比現有的結束時間早
             }
           },
           {
             end: {
-              [Op.between]: [start, end] // 檢查新的 end 時間是否落在現有預約的 start 和 end 之間
+              //如果兩個條件都達成代表新的結束時間在現有的時間中間
+              [Op.gt]: startDate,//檢查新的結束時間比現有的開始時間晚
+              [Op.lt]: end//檢查新的結束時間比現有的結束時間早
             }
           },
           {
             [Op.and]: [
-              { start: { [Op.lte]: start } }, // 檢查現有預約的 start 是否在新預約的 start 之前或相等 lit為小於等於
-              { end: { [Op.gte]: end } } // 檢查現有預約的 end 是否在新預約的 end 之後或相等 gte為大於等於
+              //如果兩個條件都達成代表新的整個時間在現有的時間中間
+              { start: { [Op.lte]: startDate } }, 
+              //新的開始時間比現有的開始時間晚或是一樣
+              { end: { [Op.gte]: end } }
+              //新的結束時間比現有的結束時間早或是一樣
             ]
           }
         ]
       }
     })
+
     if (conflictingOrders) {
       throw new Error('該員工在此時段已有其他預約')
     }
