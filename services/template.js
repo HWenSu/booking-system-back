@@ -23,8 +23,7 @@ class TemplateService {
   // 獲取服務數據
   async getServices() {
     const services = await serviceModel.findAll()
-
-    let serviceMap = new Map()
+    const serviceMap = new Map()
 
     // 處理服務資料
     services.forEach((service) => {
@@ -75,11 +74,29 @@ class TemplateService {
     return staffByGender
   }
 
+  // 查詢每位員工的不可用日期
+  async getUnavailableDates() {
+    const orders = await orderModel.findAll()
+    const unavailableDates = {}
 
-  // 格式化模板數據
-  formatTemplateData(template, serviceMap, staffByGender) {
-    let formattedTemplates = []
-    let changePageTemplates = []
+    orders.forEach((order) => {
+      const staff = order.staff
+      if (!unavailableDates[staff]) {
+        unavailableDates[staff] = []
+      }
+
+      unavailableDates[staff].push({
+        start: order.start,
+        end: order.end
+      })
+    })
+    return unavailableDates
+  }
+
+  // 處理模板數據
+  formatTemplateData(template, serviceMap, staffByGender, unavailableDates) {
+    const formattedTemplates = []
+    const changePageTemplates = []
 
     template.templateDataModels.forEach((dataModel) => {
       const formattedData = {
@@ -97,6 +114,11 @@ class TemplateService {
         formattedData.name =
           dataModel.label.charAt(0).toUpperCase() + dataModel.label.slice(1)
         formattedData.Data[0].type = dataModel.type
+      }
+
+      // TimePicker 類型，填充不可用時間
+      if (template.type === 'TimePicker') {
+        formattedData.Data[0].unavailableDates = unavailableDates
       }
 
       // ChangePage 類型
@@ -145,8 +167,8 @@ class TemplateService {
   }
 
   // 排列模板順序
-  orderTemplates(formattedTemplates, changePageTemplates) {
-    let orderedTemplates = []
+  orderTemplates(formattedTemplates, changePageTemplates, unavailableDates) {
+    const orderedTemplates = []
 
     // 1. 插入 Service
     orderedTemplates.push(
@@ -174,7 +196,8 @@ class TemplateService {
       Data: [
         {
           label: '',
-          required: true
+          required: true,
+          unavailableDates: unavailableDates
         }
       ]
     })
@@ -205,19 +228,24 @@ class TemplateService {
     const templates = await this.getTemplates()
     const services = await this.getServices()
     const staff = await this.getStaff(company)
+    const unavailableDates = await this.getUnavailableDates()
 
     let allFormattedTemplates = []
     let allChangePageTemplates = []
 
     templates.forEach((template) => {
       const { formattedTemplates, changePageTemplates } =
-        this.formatTemplateData(template, services, staff)
+        this.formatTemplateData(template, services, staff, unavailableDates)
       allFormattedTemplates = allFormattedTemplates.concat(formattedTemplates)
       allChangePageTemplates =
         allChangePageTemplates.concat(changePageTemplates)
     })
 
-    return this.orderTemplates(allFormattedTemplates, allChangePageTemplates)
+    return this.orderTemplates(
+      allFormattedTemplates,
+      allChangePageTemplates,
+      unavailableDates
+    )
   }
 }
 

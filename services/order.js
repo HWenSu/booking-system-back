@@ -1,4 +1,4 @@
-//service 做資料正確的判斷
+//service.order.js 做資料正確的判斷
 //顯示錯誤的訊息做分類
 const { orderModel, serviceModel, staffModel } = require('../models')
 require('dotenv').config() // 加載 .env 文件
@@ -6,7 +6,6 @@ const { Op } = require('sequelize')
 const nodemailer = require('nodemailer')
 
 class OrderService {
-  //直接讀取陣列裡面全部的資料就好 不用全部重讀一遍read
   async getAllOrder() {
     return orderModel.findAll()
   }
@@ -34,10 +33,9 @@ class OrderService {
     }
 
     const genderConvert = {
-      1: '男',
-      2: '女',
-      3: '其他',
-      4: '不想說'
+      1: '女',
+      2: '其他',
+      3: '男',
     }
 
     // 計算 end time 根據服務時間長度
@@ -47,7 +45,7 @@ class OrderService {
 
     const conflictingOrders = await orderModel.findOne({
       where: {
-        staff: staff, // 檢查是否有相同的員工
+        staff: staffRecord.name, // 檢查是否有相同的員工
         [Op.or]: [
           {
             start: {
@@ -59,14 +57,14 @@ class OrderService {
           {
             end: {
               //如果兩個條件都達成代表新的結束時間在現有的時間中間
-              [Op.gt]: startDate,//檢查新的結束時間比現有的開始時間晚
-              [Op.lt]: end//檢查新的結束時間比現有的結束時間早
+              [Op.gt]: startDate, //檢查新的結束時間比現有的開始時間晚
+              [Op.lt]: end //檢查新的結束時間比現有的結束時間早
             }
           },
           {
             [Op.and]: [
               //如果兩個條件都達成代表新的整個時間在現有的時間中間
-              { start: { [Op.lte]: startDate } }, 
+              { start: { [Op.lte]: startDate } },
               //新的開始時間比現有的開始時間晚或是一樣
               { end: { [Op.gte]: end } }
               //新的結束時間比現有的結束時間早或是一樣
@@ -85,7 +83,7 @@ class OrderService {
       serviceId: orderData.serviceId,
       start: orderData.start,
       end: end,
-      staff: orderData.staff,
+      staff: staffRecord.name,
       name: orderData.name,
       gender: genderConvert[orderData.gender],
       phone: orderData.phone,
@@ -104,7 +102,7 @@ class OrderService {
     return order.update(orderData)
   }
 
-  //刪除前確認文章是否存在
+  //刪除前確認訂單是否存在
   async deleteOrder(id) {
     const order = await orderModel.findByPk(id)
     if (!order) {

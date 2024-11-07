@@ -1,4 +1,4 @@
-//model 做數據管理
+//model/order.js 做數據管理
 const { DataTypes } = require('sequelize')
 const sequelize = require('../util/db')
 
@@ -24,7 +24,7 @@ const orderModel = sequelize.define(
       allowNull: false
     },
     staff: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: false
     },
     name: {
