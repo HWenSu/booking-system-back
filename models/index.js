@@ -4,6 +4,8 @@ const certificateModel = require('./certificate')
 const orderModel = require('./order')
 const templateModel = require('./template')
 const templateDataModel = require('./templateData')
+const massageImageModel = require('./massageImage')
+const staffImageModel = require('./staffImage')
 require('./associations')
 
 module.exports = {
@@ -12,5 +14,7 @@ module.exports = {
   certificateModel,
   orderModel,
   templateModel,
-  templateDataModel
+  templateDataModel,
+  massageImageModel,
+  staffImageModel
 }

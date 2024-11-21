@@ -19,13 +19,10 @@ const staffModel = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false
     },
-    gender: {
+    gender_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 3
-    },
-    img: {
-      type: DataTypes.STRING
     },
     expertise: {
       type: DataTypes.STRING,

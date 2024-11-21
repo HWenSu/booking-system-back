@@ -1,18 +1,60 @@
 //service/service.js 做資料正確的判斷
 //顯示錯誤的訊息做分類
-const { serviceModel } = require('../models')
+const { serviceModel, massageImageModel } = require('../models')
+const sharp = require('sharp')
 
 class ServiceService {
   async getAllService() {
-    return serviceModel.findAll()
+    const services = await serviceModel.findAll({
+      include: [
+        {
+          model: massageImageModel
+        }
+      ]
+    })
+
+    // 處理圖片並展平結構
+    return services.map((service) => {
+      const serviceData = service.toJSON()
+      const imageData = serviceData.massageImageModel
+        ? `data:image/png;base64,${Buffer.from(
+            serviceData.massageImageModel.img
+          ).toString('base64')}`
+        : null
+
+      return {
+        ...serviceData,
+        img: imageData,
+        massageImageModel: undefined // 移除不需要的嵌套字段
+      }
+    })
   }
 
   async getServiceById(id) {
-    const service = await serviceModel.findByPk(id)
+    const service = await serviceModel.findByPk(id, {
+      include: [
+        {
+          model: massageImageModel
+        }
+      ]
+    })
+
     if (!service) {
       throw new Error('查無此服務')
     }
-    return service
+    // 將圖片轉換為 Base64 格式返回
+    const serviceData = service.toJSON()
+    const imageData = serviceData.massageImageModel?.img
+      ? `data:image/png;base64,${Buffer.from(
+          serviceData.massageImageModel.img
+        ).toString('base64')}`
+      : null
+
+    return {
+      ...serviceData,
+      img: imageData,
+      massageImageModel: undefined // 移除嵌套字段
+    }
   }
 
   async getMassageId(name) {
@@ -35,19 +77,13 @@ class ServiceService {
     }
   }
 
-  async createService(serviceData, file) {
+  async createService(serviceData) {
     const categories = ['A', 'B', 'C']
     const defaultCategory = 'A'
 
     serviceData.category = categories.includes(serviceData.category)
       ? serviceData.category
       : defaultCategory
-
-    let imagePath = ''
-    if (file !== undefined) {
-      //config js
-      imagePath = `http://localhost:5000/images/service/${file.originalname}`
-    }
 
     const { name, price, duration } = serviceData
 
@@ -67,8 +103,7 @@ class ServiceService {
         ...serviceData,
         price: price[i],
         duration: duration[i],
-        img: imagePath,
-        massage_id:massageId
+        massage_id: massageId
       }
       const newService = await serviceModel.create(newServiceData)
       services.push(newService)
@@ -79,6 +114,9 @@ class ServiceService {
 
   //如果進來的ID是負數或是英文 這裡擋掉  //這裡返回到promise
   async updateService(id, serviceData) {
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new Error('無效的 ID')
+    }
     const service = await serviceModel.findByPk(id)
     if (!service) {
       throw new Error(`查無此服務`)
@@ -94,6 +132,70 @@ class ServiceService {
       throw new Error(`查無此員工`)
     }
     return service.destroy()
+  }
+
+  async createImage(massageId, file) {
+    if (!massageId) {
+      throw new Error('請提供 massage_id')
+    }
+
+    if (!file) {
+      console.log('未收到圖片文件', file) // 調試輸出
+      throw new Error('請提供圖片')
+    }
+
+    // 確保 massageId 是正確的數值
+    const validMassageId = massageId.id ? massageId.id : massageId
+
+    // 檢查 massage_id 是否存在於 serviceModel
+    const existingService = await serviceModel.findOne({
+      where: { massage_id: validMassageId }
+    })
+
+    if (!existingService) {
+      throw new Error('無效的 massage_id，請先創建對應的服務')
+    }
+
+    // 檢查圖片是否已經與該 massage_id 綁定
+    const existingImage = await massageImageModel.findByPk(validMassageId)
+    if (existingImage) {
+      throw new Error('該 massage_id 已經有關聯的圖片，無法重複綁定')
+    }
+
+    const imageBuffer = await sharp(file.buffer)
+      .resize({ width: 800 }) // 設定最大寬度為 800 像素
+      .toFormat('jpeg') // 將圖片轉換為 JPEG 格式
+      .toBuffer() // 將結果轉為二進制緩衝區
+
+    const newImage = await massageImageModel.create({
+      id: validMassageId, // 將 massage_id 作為圖片的主鍵
+      img: imageBuffer
+    })
+
+    return newImage
+  }
+
+  async getImageByMassageId(id) {
+    if (!id) {
+      throw new Error('請提供 massage_id')
+    }
+
+    const image = await massageImageModel.findByPk(id)
+    if (!image) {
+      throw new Error('找不到對應的圖片')
+    }
+
+    return `data:image/jpeg;base64,${image.img.toString('base64')}`
+  }
+
+  async deleteImageById(id) {
+    const image = await massageImageModel.findByPk(id)
+    if (!image) {
+      throw new Error('找不到圖片')
+    }
+
+    await image.destroy()
+    return { message: '圖片已刪除' }
   }
 }
 const serviceService = new ServiceService()

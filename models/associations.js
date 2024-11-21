@@ -4,6 +4,10 @@ const certificateModel = require('./certificate')
 const serviceModel = require('./service')
 const templateModel = require('./template')
 const templateDataModel = require('./templateData')
+const orderModel = require('./order')
+const massageImageModel = require('./massageImage')
+const staffImageModel = require('./staffImage')
+
 
 
 // 定義多對多關聯
@@ -54,11 +58,48 @@ templateDataModel.belongsToMany(serviceModel, {
   timestamps: false
 })
 
+staffModel.hasMany(orderModel, {
+  foreignKey: 'staff',
+  sourceKey: 'id',
+  timestamps: false
+})
+
+orderModel.belongsTo(staffModel, {
+  foreignKey: 'staff',
+  targetKey: 'id',
+  timestamps: false
+})
+
+massageImageModel.hasMany(serviceModel, {
+  foreignKey: 'massage_id',
+  sourceKey: 'id',
+  timestamps: false
+})
+
+serviceModel.belongsTo(massageImageModel, {
+  foreignKey: 'massage_id',
+  targetKey: 'id',
+  timestamps: false
+})
+
+staffImageModel.hasOne(staffModel, {
+  foreignKey: 'id',
+  sourceKey: 'id',
+  timestamps: false
+})
+
+staffModel.belongsTo(staffImageModel, {
+  foreignKey: 'id',
+  targetKey: 'id',
+  timestamps: false
+})
 
 module.exports = {
   staffModel,
   certificateModel,
   serviceModel,
   templateModel,
-  templateDataModel
+  templateDataModel,
+  massageImageModel,
+  staffImageModel
 }

@@ -1,11 +1,11 @@
-//route      檢查欄位
+//route/staff.js      檢查欄位
 //const express = require('express')
 //const router = express.Router()
 const { Router } = require('express')
 const router = Router()
 const { staffService } = require('../services')
-const upload = require('../util/upload')
-const uploadFile = upload('images/staff').single('img')
+const upload = require('../util/upload')()
+const uploadBuffer = upload.single('img')
 //調用util
 
 //路由這邊檢查參數，有無參數跟參數是否在合理範圍內
@@ -38,8 +38,8 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// 新增員工   //staffService.upload(依照不同的路徑給參數).single('img') 變成一個變數
-router.post('/', uploadFile, async (req, res) => {
+// 新增員工   
+router.post('/', async (req, res) => {
   try {
     const { name, expertise } = req.body
     const company = req.company
@@ -97,7 +97,7 @@ router.delete('/:id/certificates', async (req, res) => {
 });
 
 
-// 更新服務
+// 更新員工
 router.put('/:id', async (req, res) => {
   try {
     const { name, img, expertise } = req.body
@@ -117,13 +117,45 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// 刪除服務
+// 刪除員工
 router.delete('/:id', async (req, res) => {
   try {
     await staffService.deleteStaff(Number(req.params.id))
     res.status(204).json({ msg: 'success' })
   } catch (err) {
     res.status(400).json({ error: err.staff })
+  }
+})
+
+//新增圖片
+router.post('/image', uploadBuffer, async (req, res) => {
+  try {
+    const { id } = req.body
+    if (!id) {
+      return res.status(400).json({ error: '請輸入id' })
+    }
+    const newImage = await staffService.createImage(req.body, req.file)
+    res.status(201).json(newImage)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+router.get('/image/:id', async (req, res) => {
+  try {
+    const image = await staffService.getImageById(req.params.id)
+    res.send(`<img src="${image}" alt="Image" />`)
+  } catch (err) {
+    res.status(404).json({ error: err.message })
+  }
+})
+
+router.delete('/image/:id', async (req, res) => {
+  try {
+    const message = await staffService.deleteImageById(req.params.id)
+    res.json(message)
+  } catch (err) {
+    res.status(404).json({ error: err.message })
   }
 })
 

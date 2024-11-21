@@ -1,11 +1,11 @@
-//route      檢查欄位
+//route/service.js      檢查欄位
 //const express = require('express')
 //const router = express.Router()
 const { Router } = require('express')
 const router = Router()
 const { serviceService } = require('../services')
-const upload = require('../util/upload')
-const uploadFile = upload('images/service').single('img')
+const upload = require('../util/upload')()
+const uploadBuffer = upload.single('img')
 //調用util
 
 //路由這邊檢查參數，有無參數跟參數是否在合理範圍內
@@ -36,8 +36,8 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// 創建服務   //serviceService.upload(依照不同的路徑給參數).single('img') 變成一個變數
-router.post('/', uploadFile, async (req, res) => {
+// 創建服務  
+router.post('/', async (req, res) => {
   try {
     const { name, price, duration, description } = req.body
     // 以下分別做檢查
@@ -67,7 +67,7 @@ router.post('/', uploadFile, async (req, res) => {
     if (!description) {
       return res.status(400).json({ error: '請輸入description' })
     }
-    const newService = await serviceService.createService(req.body, req.file)
+    const newService = await serviceService.createService(req.body)
     res.status(201).json(newService)
   } catch (err) {
     res.status(500).json({ error: err.message || '訊息錯誤' })
@@ -100,8 +100,42 @@ router.delete('/:id', async (req, res) => {
     await serviceService.deleteService(Number(req.params.id))
     res.status(204).json({ msg: 'success' })
   } catch (err) {
-    res.status(400).json({ error: err.service })
+    res.status(400).json({ error: err.message })
+  }
+})
+
+//新增圖片
+router.post('/image', uploadBuffer, async (req, res) => {
+  try {
+    const { id } = req.body
+    if (!id) {
+      return res.status(400).json({ error: '請輸入id' })
+    }
+    const newImage = await serviceService.createImage(req.body, req.file)
+    res.status(201).json(newImage)
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+router.get('/image/:id', async (req, res) => {
+  try {
+    const image = await serviceService.getImageByMassageId(req.params.id)
+    res.send(`<img src="${image}" alt="Image" />`)
+  } catch (err) {
+    res.status(404).json({ error: err.message })
+  }
+})
+
+router.delete('/image/:id', async (req, res) => {
+  try {
+    const message = await serviceService.deleteImageById(req.params.id)
+    res.json(message)
+  } catch (err) {
+    res.status(404).json({ error: err.message })
   }
 })
 
 module.exports = router
+
+

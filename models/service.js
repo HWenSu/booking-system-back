@@ -2,7 +2,6 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../util/db')
 
-
 // 定義 Certificate 模型
 const serviceModel = sequelize.define(
   'serviceModel',
@@ -18,7 +17,7 @@ const serviceModel = sequelize.define(
     },
     massage_id: {
       type: DataTypes.INTEGER,
-      allowNull: false, 
+      allowNull: false
     },
     category: {
       type: DataTypes.STRING,
@@ -36,9 +35,6 @@ const serviceModel = sequelize.define(
     description: {
       type: DataTypes.STRING,
       allowNull: false
-    },
-    img: {
-      type: DataTypes.STRING
     }
   },
   {

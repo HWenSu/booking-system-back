@@ -24,7 +24,7 @@ const orderModel = sequelize.define(
       allowNull: false
     },
     staff: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     name: {

@@ -20,6 +20,36 @@ class TemplateService {
     })
   }
 
+  async createTemplate(templateData, dataModels) {
+    const template = await templateModel.create(templateData)
+    const dataModelsWithTemplateId = dataModels.map((dataModel) => ({
+      ...dataModel,
+      template_id: template.id
+    }))
+    await templateDataModel.bulkCreate(dataModelsWithTemplateId)
+    return template
+  }
+
+  async createTemplate(templateData, dataModels) {
+    const template = await templateModel.create(templateData)
+    const dataModelsWithTemplateId = dataModels.map((dataModel) => ({
+      ...dataModel,
+      template_id: template.id
+    }))
+    await templateDataModel.bulkCreate(dataModelsWithTemplateId)
+    return template
+  }
+
+  async deleteTemplate(templateId) {
+    await templateDataModel.destroy({
+      where: { template_id: templateId }
+    })
+    await templateModel.destroy({
+      where: { id: templateId }
+    })
+    return { message: 'Template deleted successfully' }
+  }
+
   // 獲取服務數據
   async getServices() {
     const services = await serviceModel.findAll()
@@ -51,7 +81,8 @@ class TemplateService {
     const staff = await staffModel.findAll({
       where: {
         company: company
-      }
+      },
+      attributes: ['id', 'name', 'gender_id']
     })
 
     // 根據性別分組員工資料
@@ -62,12 +93,16 @@ class TemplateService {
     }
 
     staff.forEach((staffMember) => {
-      if (staffMember.gender === 3) {
-        staffByGender.male.push(staffMember.name)
-      } else if (staffMember.gender === 1) {
-        staffByGender.female.push(staffMember.name)
+      const staffData = {
+        id: staffMember.id,
+        name: staffMember.name
+      }
+      if (staffMember.gender_id === 3) {
+        staffByGender.male.push(staffData)
+      } else if (staffMember.gender_id === 1) {
+        staffByGender.female.push(staffData)
       } else {
-        staffByGender.other.push(staffMember.name)
+        staffByGender.other.push(staffData)
       }
     })
 
@@ -76,16 +111,26 @@ class TemplateService {
 
   // 查詢每位員工的不可用日期
   async getUnavailableDates() {
-    const orders = await orderModel.findAll()
+    const orders = await orderModel.findAll({
+      include: [
+        {
+          model: staffModel,
+          attributes: ['id', 'name']
+        }
+      ]
+    })
     const unavailableDates = {}
 
     orders.forEach((order) => {
-      const staff = order.staff
-      if (!unavailableDates[staff]) {
-        unavailableDates[staff] = []
+      const staffData = order.staffModel
+      const staffId = staffData.id
+      const staffName = staffData.name
+      const key = `staff_name:${staffName} ,staff_id:${staffId}`
+      if (!unavailableDates[key]) {
+        unavailableDates[key] = []
       }
 
-      unavailableDates[staff].push({
+      unavailableDates[key].push({
         start: order.start,
         end: order.end
       })
@@ -151,9 +196,9 @@ class TemplateService {
           ]
         } else if (dataModel.label === 'Staff') {
           formattedData.Data[0].option = [
-            { id: 1, name: staffByGender.female },
-            { id: 2, name: staffByGender.other },
-            { id: 3, name: staffByGender.male }
+            { gender_id: 1, name: staffByGender.female },
+            { gender_id: 2, name: staffByGender.other },
+            { gender_id: 3, name: staffByGender.male }
           ]
         }
       }

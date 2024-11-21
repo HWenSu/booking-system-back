@@ -45,7 +45,7 @@ class OrderService {
 
     const conflictingOrders = await orderModel.findOne({
       where: {
-        staff: staffRecord.name, // 檢查是否有相同的員工
+        staff: staff, // 檢查是否有相同的員工
         [Op.or]: [
           {
             start: {
@@ -83,7 +83,7 @@ class OrderService {
       serviceId: orderData.serviceId,
       start: orderData.start,
       end: end,
-      staff: staffRecord.name,
+      staff: orderData.staff,
       name: orderData.name,
       gender: genderConvert[orderData.gender],
       phone: orderData.phone,
