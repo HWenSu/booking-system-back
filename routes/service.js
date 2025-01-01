@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
     const services = await serviceService.getAllService()
     res.json(services)
   } catch (err) {
-    res.status(500).json({ error: '訊息錯誤' })
+    res.status(500).json({ error: '訊息錯誤', err })
   }
 })
 
