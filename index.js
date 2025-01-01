@@ -9,7 +9,13 @@ const bodyParser = require('body-parser')
 const app = express()
 
 // 使用 cors 中間件，允許不同網域來的請求，免於同源策略的限制
-app.use(cors())
+app.use(
+  cors({
+    origin: ['https://booking-system-dbdd5xsag-elvasus-projects.vercel.app'], // 替換為你的 Vercel 前端域名
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // 允許的請求方法
+    credentials: true, // 如果需要傳遞 cookies 或身份驗證令牌
+  })
+)
 //告訴 Express 應用程式要使用 express.json() 中間件來解析請求主體中的 JSON 格式資料
 app.use(express.json())
 
