@@ -42,8 +42,8 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 //})
 
 // 設置監聽的 port (後端 URL 會是 localhost:[PORT])
-const PORT = 5000
+const PORT = process.env.PORT || 5000
 
 app.listen(PORT, () => {
-  console.log(`express server is running on http://localhost:${PORT}`)
+  console.log(`express server is running on ${PORT}`)
 })
