@@ -13,7 +13,7 @@ app.use(
   cors({
     origin: [
       'https://booking-system-weld-two.vercel.app',
-      'https://booking-system.zeabur.app/',
+      'https://booking-system.zeabur.app',
       'http://localhost:3000',
     ], // 替換為你的 Vercel 前端域名
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // 允許的請求方法
